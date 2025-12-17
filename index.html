@@ -10,22 +10,31 @@
 
   <style>
     html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#000; }
-
-    /* HUD arriba */
     #hud{
       position:fixed; left:10px; top:10px; z-index:9999;
       background:rgba(0,0,0,.55); color:#fff; padding:8px 10px;
       font:14px system-ui, -apple-system, Segoe UI, Roboto, Arial;
       border-radius:10px;
     }
-
-    /* Asegura que el canvas ocupe toda la pantalla */
+    #start{
+      position:fixed; inset:0; z-index:9998;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(0,0,0,.85);
+      color:#fff; font:16px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    #start button{
+      font-size:18px; padding:14px 18px; border-radius:12px; border:0;
+    }
     a-scene, .a-canvas { position: fixed !important; inset: 0 !important; }
   </style>
 </head>
 
 <body>
-  <div id="hud">Solicitando cámara…</div>
+  <div id="hud">Listo para iniciar.</div>
+
+  <div id="start">
+    <button id="btn">Iniciar AR (activar cámara)</button>
+  </div>
 
   <a-scene
     embedded
@@ -41,7 +50,7 @@
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0">
-      <a-entity id="anchor" position="0 -1.0 0">
+      <a-entity position="0 -1.0 0">
         <a-gltf-model
           src="#model"
           scale="0.08 0.08 0.08"
@@ -58,32 +67,36 @@
 
   <script>
     const hud = document.getElementById('hud');
+    const start = document.getElementById('start');
+    const btn = document.getElementById('btn');
+    const sceneEl = document.querySelector('a-scene');
 
-    // iOS/Safari: a veces el permiso queda “atascado”. Esto ayuda:
-    // Si el usuario bloqueó antes, hay que permitir manualmente en Ajustes.
-    function hint(msg){ hud.textContent = msg; }
+    function setHud(msg){ hud.textContent = msg; }
 
-    // Espera a que A-Frame cree el video de la cámara y revisa si está reproduciendo
-    setTimeout(() => {
-      const video = document.querySelector('video');
-      if (!video) {
-        hint('No encuentro el video de cámara. Revisa permisos.');
-        return;
+    btn.addEventListener('click', async () => {
+      try {
+        setHud('Arrancando cámara…');
+
+        // Arranque manual (importante en iOS por gesto de usuario)
+        const sys = sceneEl.systems["mindar-image-system"];
+        if (sys && sys.start) await sys.start();
+
+        // Intento de “desbloquear” el video en iOS
+        const video = document.querySelector('video');
+        if (video) {
+          video.setAttribute('playsinline','');
+          video.setAttribute('webkit-playsinline','');
+          video.muted = true;
+          try { await video.play(); } catch(e) {}
+        }
+
+        start.style.display = 'none';
+        setHud('Cámara iniciada ✅ Apunta al marcador.');
+      } catch (e) {
+        console.log(e);
+        setHud('Error iniciando cámara. Revisa: aA → Ajustes del sitio web → Cámara → Permitir.');
       }
-
-      // Fuerza inline en iOS
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      video.muted = true;
-
-      // Si el video tiene datos, debería mostrar fondo real
-      const check = () => {
-        const ok = video.readyState >= 2 && video.videoWidth > 0;
-        hint(ok ? 'Cámara OK ✅ Apunta al marcador.' : 'Cámara sin imagen… (permiso/recarga)');
-      };
-      check();
-      setInterval(check, 1000);
-    }, 1200);
+    });
   </script>
 </body>
 </html>
