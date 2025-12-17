@@ -9,40 +9,51 @@
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#000; }
-    #hud{
-      position:fixed; left:10px; top:10px; z-index:9999;
-      background:rgba(0,0,0,.55); color:#fff; padding:8px 10px;
-      font:14px system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      border-radius:10px;
+    html, body {
+      margin: 0; width: 100%; height: 100%;
+      overflow: hidden; background: transparent;
     }
+
+    #hud{
+      position: fixed; left: 10px; top: 10px; z-index: 9999;
+      background: rgba(0,0,0,.55); color: #fff; padding: 8px 10px;
+      font: 14px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      border-radius: 10px;
+    }
+
     #start{
-      position:fixed; inset:0; z-index:9998;
-      display:flex; align-items:center; justify-content:center;
-      background:rgba(0,0,0,.85);
-      color:#fff; font:16px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      position: fixed; inset: 0; z-index: 9998;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.85);
     }
     #start button{
-      font-size:18px; padding:14px 18px; border-radius:12px; border:0;
+      font-size: 18px; padding: 14px 18px; border-radius: 12px; border: 0;
     }
+
     a-scene, .a-canvas { position: fixed !important; inset: 0 !important; }
   </style>
 </head>
 
 <body>
-  <div id="hud">Listo para iniciar.</div>
+  <div id="hud">Pulsa “Iniciar AR”</div>
 
   <div id="start">
-    <button id="btn">Iniciar AR (activar cámara)</button>
+    <button id="btn">Iniciar AR (cámara trasera)</button>
   </div>
 
   <a-scene
     embedded
-    mindar-image="imageTargetSrc: targets.mind; filterMinCF: 0.0001; filterBeta: 8; warmupTolerance: 2;"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
     renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true;"
-  >
+    mindar-image="
+      imageTargetSrc: targets.mind;
+      facingMode: environment;
+      filterMinCF: 0.0001;
+      filterBeta: 8;
+      warmupTolerance: 2;
+    "
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
     <a-assets>
       <a-asset-item id="model" src="warrior.glb"></a-asset-item>
     </a-assets>
@@ -71,17 +82,14 @@
     const btn = document.getElementById('btn');
     const sceneEl = document.querySelector('a-scene');
 
-    function setHud(msg){ hud.textContent = msg; }
-
     btn.addEventListener('click', async () => {
       try {
-        setHud('Arrancando cámara…');
+        hud.textContent = 'Iniciando cámara…';
 
-        // Arranque manual (importante en iOS por gesto de usuario)
         const sys = sceneEl.systems["mindar-image-system"];
         if (sys && sys.start) await sys.start();
 
-        // Intento de “desbloquear” el video en iOS
+        // Asegura video inline (iOS)
         const video = document.querySelector('video');
         if (video) {
           video.setAttribute('playsinline','');
@@ -91,10 +99,9 @@
         }
 
         start.style.display = 'none';
-        setHud('Cámara iniciada ✅ Apunta al marcador.');
+        hud.textContent = 'Cámara OK ✅ Apunta al marcador.';
       } catch (e) {
-        console.log(e);
-        setHud('Error iniciando cámara. Revisa: aA → Ajustes del sitio web → Cámara → Permitir.');
+        hud.textContent = 'Error cámara. Safari → aA → Ajustes del sitio web → Cámara: Permitir';
       }
     });
   </script>
