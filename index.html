@@ -36,6 +36,18 @@
 
 <body>
   <div id="hud">Pulsa “Iniciar AR”</div>
+<div id="controls" style="
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 9999;
+">
+  <button id="idleBtn" style="padding:12px 16px; border-radius:12px;">Idle</button>
+  <button id="walkBtn" style="padding:12px 16px; border-radius:12px;">Walk</button>
+</div>
 
   <div id="start">
     <button id="btn">Iniciar AR (cámara trasera)</button>
@@ -57,18 +69,22 @@
     <a-assets>
       <a-asset-item id="model" src="warrior.glb"></a-asset-item>
     </a-assets>
+    
+<script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
 
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <a-entity mindar-image-target="targetIndex: 0">
       <!-- Anchor ajustable: 0 0 0 centra el modelo en el marcador -->
       <a-entity id="anchor" position="0 0 0">
-        <a-gltf-model
+   <a-gltf-model
   src="#model"
   scale="0.3 0.3 0.3"
   rotation="0 0 0"
-  gesture-handler>
+  gesture-handler
+  animation-mixer="clip: Idle;"> 
 </a-gltf-model>
+        
       </a-entity>
     </a-entity>
 
@@ -80,6 +96,20 @@
     const hud = document.getElementById('hud');
     const start = document.getElementById('start');
     const btn = document.getElementById('btn');
+    document.getElementById('idleBtn').addEventListener('click', () => {
+  modelEl.setAttribute(
+    'animation-mixer',
+    'clip: Idle; loop: repeat; timeScale: 1;'
+  );
+});
+    document.getElementById('walkBtn').addEventListener('click', () => {
+  modelEl.setAttribute(
+    'animation-mixer',
+    'clip: Walk; loop: repeat; timeScale: 1;'
+  );
+});
+    const modelEl = document.querySelector('a-gltf-model');
+    
     const sceneEl = document.querySelector('a-scene');
 
     btn.addEventListener('click', async () => {
@@ -162,6 +192,7 @@ AFRAME.registerComponent('gesture-handler', {
 </script>
 </body>
 </html>
+
 
 
 
