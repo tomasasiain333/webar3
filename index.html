@@ -64,10 +64,11 @@
       <!-- Anchor ajustable: 0 0 0 centra el modelo en el marcador -->
       <a-entity id="anchor" position="0 0 0">
         <a-gltf-model
-          src="#model"
-          scale="0.3 0.3 0.3"
-          rotation="0 0 0">
-        </a-gltf-model>
+  src="#model"
+  scale="0.3 0.3 0.3"
+  rotation="0 0 0"
+  gesture-handler>
+</a-gltf-model>
       </a-entity>
     </a-entity>
 
@@ -103,8 +104,65 @@
       }
     });
   </script>
+  <script>
+AFRAME.registerComponent('gesture-handler', {
+  init: function () {
+
+    // Guardamos escala y rotación inicial
+    this.initialScale = this.el.object3D.scale.clone();
+    this.currentScale = 1;
+    this.rotationY = 0;
+
+    // Referencia al canvas
+    this.canvas = this.el.sceneEl.canvas;
+
+    // Eventos táctiles
+    this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this));
+    this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this));
+  },
+
+  onTouchStart: function (event) {
+    if (event.touches.length === 1) {
+      this.lastX = event.touches[0].clientX;
+    }
+
+    if (event.touches.length === 2) {
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+      this.startDistance = Math.sqrt(dx * dx + dy * dy);
+    }
+  },
+
+  onTouchMove: function (event) {
+    event.preventDefault();
+
+    /* ROTACIÓN (1 dedo) */
+    if (event.touches.length === 1) {
+      const currentX = event.touches[0].clientX;
+      const deltaX = currentX - this.lastX;
+      this.lastX = currentX;
+
+      this.rotationY += deltaX * 0.5;
+      this.el.object3D.rotation.y = THREE.MathUtils.degToRad(this.rotationY);
+    }
+
+    /* ESCALA (2 dedos) */
+    if (event.touches.length === 2) {
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+      const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+      const scaleChange = currentDistance / this.startDistance;
+      const newScale = this.initialScale.clone().multiplyScalar(scaleChange);
+
+      this.el.object3D.scale.copy(newScale);
+    }
+  }
+});
+</script>
 </body>
 </html>
+
 
 
 
