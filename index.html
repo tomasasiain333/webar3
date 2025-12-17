@@ -37,7 +37,7 @@
   >
     <a-assets>
       <!-- 👇 Cambia "modelo.glb" por el nombre real de TU archivo .glb en el repo -->
-      <a-asset-item id="m" src="modelo.glb"></a-asset-item>
+      <a-asset-item id="m" src="warrior.glb"></a-asset-item>
     </a-assets>
 
     <!-- Cámara (MindAR la controla) -->
@@ -46,10 +46,10 @@
     <!-- Target 0 = tu imagen compilada -->
     <a-entity mindar-image-target="targetIndex: 0">
       <!-- Contenedor para BAJAR el modelo (evita que quede “arriba”) -->
-      <a-entity id="anchor" position="0 -0.35 0">
+      <a-entity id="anchor" position="0 -1.0 0">
         <a-gltf-model
-          src="warrior.glb"
-          scale="0.18 0.18 0.18"
+          src="#m"
+          scale="0.08 0.08 0.08"
           rotation="0 0 0"
           animation__pos="property: position; dur: 120; easing: linear"
           animation__rot="property: rotation; dur: 120; easing: linear">
@@ -74,3 +74,4 @@
   </script>
 </body>
 </html>
+
