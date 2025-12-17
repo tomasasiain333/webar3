@@ -2,69 +2,46 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>WebAR con imagen (MindAR)</title>
 
-  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-  <!-- MindAR para A-Frame -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: transparent;
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:#000; }
+
+    /* HUD arriba */
+    #hud{
+      position:fixed; left:10px; top:10px; z-index:9999;
+      background:rgba(0,0,0,.55); color:#fff; padding:8px 10px;
+      font:14px system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      border-radius:10px;
     }
 
-    #hud {
-      position: fixed;
-      left: 10px;
-      top: 10px;
-      z-index: 9999;
-      background: rgba(0,0,0,0.55);
-      color: #fff;
-      padding: 8px 10px;
-      font: 14px system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      border-radius: 10px;
-    }
+    /* Asegura que el canvas ocupe toda la pantalla */
+    a-scene, .a-canvas { position: fixed !important; inset: 0 !important; }
   </style>
 </head>
 
 <body>
-  <div id="hud">Abre en Safari y permite la cámara</div>
+  <div id="hud">Solicitando cámara…</div>
 
   <a-scene
     embedded
-    renderer="colorManagement: true; physicallyCorrectLights: true; colorSpace: sRGB;"
-    mindar-image="
-      imageTargetSrc: targets.mind;
-      filterMinCF: 0.0001;
-      filterBeta: 8;
-      warmupTolerance: 2;
-    "
+    mindar-image="imageTargetSrc: targets.mind; filterMinCF: 0.0001; filterBeta: 8; warmupTolerance: 2;"
     vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false">
-
-    <!-- Carga de assets -->
+    device-orientation-permission-ui="enabled: false"
+    renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true;"
+  >
     <a-assets>
-      <!-- ⚠️ Asegúrate de que ESTE nombre coincide EXACTAMENTE con tu archivo -->
       <a-asset-item id="model" src="warrior.glb"></a-asset-item>
     </a-assets>
 
-    <!-- Cámara (MindAR la gestiona) -->
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Target de imagen -->
     <a-entity mindar-image-target="targetIndex: 0">
-
-      <!-- Anchor para ajustar altura -->
-      <a-entity position="0 -1.0 0">
-
-        <!-- Modelo 3D -->
+      <a-entity id="anchor" position="0 -1.0 0">
         <a-gltf-model
           src="#model"
           scale="0.08 0.08 0.08"
@@ -72,14 +49,41 @@
           animation__pos="property: position; dur: 120; easing: linear"
           animation__rot="property: rotation; dur: 120; easing: linear">
         </a-gltf-model>
-
       </a-entity>
     </a-entity>
 
-    <!-- Luces -->
     <a-entity light="type: ambient; intensity: 1.0"></a-entity>
     <a-entity light="type: directional; intensity: 0.8" position="0 1 1"></a-entity>
-
   </a-scene>
+
+  <script>
+    const hud = document.getElementById('hud');
+
+    // iOS/Safari: a veces el permiso queda “atascado”. Esto ayuda:
+    // Si el usuario bloqueó antes, hay que permitir manualmente en Ajustes.
+    function hint(msg){ hud.textContent = msg; }
+
+    // Espera a que A-Frame cree el video de la cámara y revisa si está reproduciendo
+    setTimeout(() => {
+      const video = document.querySelector('video');
+      if (!video) {
+        hint('No encuentro el video de cámara. Revisa permisos.');
+        return;
+      }
+
+      // Fuerza inline en iOS
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.muted = true;
+
+      // Si el video tiene datos, debería mostrar fondo real
+      const check = () => {
+        const ok = video.readyState >= 2 && video.videoWidth > 0;
+        hint(ok ? 'Cámara OK ✅ Apunta al marcador.' : 'Cámara sin imagen… (permiso/recarga)');
+      };
+      check();
+      setInterval(check, 1000);
+    }, 1200);
+  </script>
 </body>
 </html>
